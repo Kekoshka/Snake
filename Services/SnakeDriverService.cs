@@ -17,11 +17,11 @@ namespace Snake.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new Timer(UpdateSnakePlace, null, 0, 50);
+            _timer = new Timer(ChangeSnakePlace, null, 0, 50);
             return Task.CompletedTask;
         }
 
-        private void UpdateSnakePlace(object? state)
+        private void ChangeSnakePlace(object? state)
         {
             var snakes = _cache.GetKeyValueItems<Models.Snake>(key => key.StartsWith("S_"));
             snakes.ForEach(snake =>
@@ -43,6 +43,7 @@ namespace Snake.Services
                 3 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X, Y = oldSnakeHeadPlace.Y - 1 },
                 4 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X - 1, Y = oldSnakeHeadPlace.Y }
             };
+            snake.SnakePositions.Add(newSnakeHeadPlace);
         }
         private void ChangeBodyPlace(Models.Snake snake)
         {
