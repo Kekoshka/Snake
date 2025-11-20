@@ -3,6 +3,7 @@
     public class Snake
     {
         public Guid Id { get; set; }
+        public string UserIP { get; set; }
         public string Name { get; set; }
         public int Orientation { get; set; }
         public ICollection<SnakePosition> SnakePositions { get; set; }

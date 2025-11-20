@@ -1,18 +1,20 @@
 ﻿
 using Microsoft.Extensions.Caching.Memory;
-using Snake.Enums;
 using Snake.Extensions;
+using Snake.Interfaces;
 using Snake.Models;
 
 namespace Snake.Services
 {
     public class SnakeDriverService : IHostedService
     {
+        IFieldService _fieldService;
         IMemoryCache _cache;
         Timer _timer;
-        SnakeDriverService(IMemoryCache cache)
+        public SnakeDriverService(IMemoryCache cache, IFieldService fieldService)
         {
             _cache = cache;
+            _fieldService = fieldService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -24,12 +26,21 @@ namespace Snake.Services
         private void ChangeSnakePlace(object? state)
         {
             var snakes = _cache.GetKeyValueItems<Models.Snake>(key => key.StartsWith("S_"));
-            snakes.ForEach(snake =>
+            snakes.ForEach(s =>
             {
-                ChangeBodyPlace(snake.Value);
-                ChangeHeadPlace(snake.Value);
-                if (IsSnakeDie(snakes.Select(s => s.Value).ToList(), snake.Value, snake.Value.SnakePositions.Single(sp => sp.Order == 0)))
-                    _cache.Remove($"S_{snake.Value.Id}");
+                var snake = s.Value;
+                var tail = snake.SnakePositions.OrderByDescending(sp => sp.Order).First();
+                ChangeBodyPlace(snake);
+                ChangeHeadPlace(snake);
+                if (IsEatApple(snake))
+                {
+                    AppendSnakeLength(snake, tail);
+                    _fieldService.GenerateNewApple(snake.Field);
+                }
+                if (IsSnakeDie(snakes.Select(s => s.Value).ToList(),
+                    snake))
+                    _cache.Remove($"S_{snake.Id}");
+                _cache.Set($"S_{snake.Id}", snake);
             }
             );
         }
@@ -57,8 +68,30 @@ namespace Snake.Services
         {
             return Task.CompletedTask;
         }
-        private bool IsSnakeDie(List<Models.Snake> snakes, Models.Snake snake, SnakePosition headPosition) =>
-            snakes.Any(s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
+        private bool IsSnakeDie(List<Models.Snake> snakes, Models.Snake snake)
+        {
+            var headPosition = snake.SnakePositions.Single(sp => sp.Order == 0);
+            return snakes.Any(s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
             headPosition.Y < 0 || headPosition.X < 0 || headPosition.X > snake.Field.Width || headPosition.Y > snake.Field.Height;
+        }
+            
+        private bool IsEatApple(Models.Snake snake)
+        {
+            var applePosition = snake.Field.Apple;
+            return snake.SnakePositions.Any(sp => sp.Order == 0 &&
+                sp.X == applePosition.X &&
+                sp.Y == applePosition.Y);
+        }
+        private void AppendSnakeLength(Models.Snake snake,SnakePosition tail)
+        {
+            var newSnakePosition = new SnakePosition
+            {
+                Id = Guid.NewGuid(),
+                Order = snake.SnakePositions.Count,
+                X = tail.X,
+                Y = tail.Y
+            };
+            snake.SnakePositions.Add(newSnakePosition);
+        }
     }
 }

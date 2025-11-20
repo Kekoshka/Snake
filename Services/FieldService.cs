@@ -19,19 +19,20 @@ namespace Snake.Services
                 Height = height,
                 Width = width,
                 Name = name,
-                Apple = GenerateNewApple(height,width)
             };
-
+            GenerateNewApple(newField);
+            _cache.Set($"F_{newField.Id}", newField);
         }
-        public Apple GenerateNewApple(int fieldHeight, int fieldWidth)
+        public void GenerateNewApple(Field field)
         {
             var apple = new Apple
             {
                 Id = Guid.NewGuid(),
-                X = Random.Shared.Next(0,fieldWidth),
-                Y = Random.Shared.Next(0,fieldHeight)
+                X = Random.Shared.Next(0,field.Width),
+                Y = Random.Shared.Next(0,field.Height)
             };
-            return apple;
+            field.Apple = apple;
+            _cache.Set($"F_{field.Id}", field);
         }
         public void AddSnakeToField(int fieldId, string snakeName)
         {
