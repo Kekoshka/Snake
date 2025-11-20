@@ -28,6 +28,8 @@ namespace Snake.Services
             {
                 ChangeBodyPlace(snake.Value);
                 ChangeHeadPlace(snake.Value);
+                if (IsSnakeDie(snakes.Select(s => s.Value).ToList(), snake.Value, snake.Value.SnakePositions.Single(sp => sp.Order == 0)))
+                    _cache.Remove($"S_{snake.Value.Id}");
             }
             );
         }
@@ -55,5 +57,8 @@ namespace Snake.Services
         {
             return Task.CompletedTask;
         }
+        private bool IsSnakeDie(List<Models.Snake> snakes, Models.Snake snake, SnakePosition headPosition) =>
+            snakes.Any(s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
+            headPosition.Y < 0 || headPosition.X < 0 || headPosition.X > snake.Field.Width || headPosition.Y > snake.Field.Height;
     }
 }
