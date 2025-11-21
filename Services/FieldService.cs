@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Snake.Interfaces;
 using Snake.Models;
+using Snake.Models.DTO;
 namespace Snake.Services
 {
     public class FieldService : IFieldService
@@ -11,17 +12,16 @@ namespace Snake.Services
         {
             _cache = cache;
         }
-        public void CreateNewField(string name, int height, int width)
+        public void CreateNewField(FieldDTO field)
         {
             var newField = new Field
             {
                 Id = Guid.NewGuid(),
-                Height = height,
-                Width = width,
-                Name = name,
+                Height = field.Height,
+                Width = field.Width,
+                Name = field.Name,
             };
             GenerateNewApple(newField);
-            _cache.Set($"F_{newField.Id}", newField);
         }
         public void GenerateNewApple(Field field)
         {
@@ -34,11 +34,6 @@ namespace Snake.Services
             field.Apple = apple;
             _cache.Set($"F_{field.Id}", field);
         }
-        public void AddSnakeToField(int fieldId, string snakeName)
-        {
-            var field = _cache.Get<Field>($"F_{fieldId}");
-            if(field is not null)
-                field.Snakes.Add(_snakeService.CreateSnake(snakeName, field));
-        }
+
     }
 }

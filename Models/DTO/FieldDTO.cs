@@ -1,11 +1,11 @@
-﻿namespace Snake.Models
+﻿namespace Snake.Models.DTO
 {
-    public class Field
+    public class FieldDTO
     {
-        public Guid Id { get; set; }
         public string Name { get; set; }
         public int Height { get; set; }
         public int Width { get; set; }
-        public Apple Apple {get;set;}
+        public Apple? Apple { get; set; }
+
     }
 }

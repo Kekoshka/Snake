@@ -4,6 +4,6 @@ namespace Snake.Interfaces
 {
     public interface ISnakeService
     {
-        Models.Snake CreateSnake(string snakeName, Field field);
+        Models.Snake CreateSnakeAndAddToField(string snakeName, string userIp, Field field);
     }
 }

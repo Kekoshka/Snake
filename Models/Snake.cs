@@ -7,7 +7,7 @@
         public string Name { get; set; }
         public int Orientation { get; set; }
         public ICollection<SnakePosition> SnakePositions { get; set; }
-        public Field Field { get; set; }
+        public Guid FieldId { get; set; }
 
     }
 }

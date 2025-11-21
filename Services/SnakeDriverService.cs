@@ -11,6 +11,7 @@ namespace Snake.Services
         IFieldService _fieldService;
         IMemoryCache _cache;
         Timer _timer;
+        Field _field;
         public SnakeDriverService(IMemoryCache cache, IFieldService fieldService)
         {
             _cache = cache;
@@ -29,13 +30,14 @@ namespace Snake.Services
             snakes.ForEach(s =>
             {
                 var snake = s.Value;
+                _field = _cache.Get<Field>($"F_{snake.FieldId}")!;
                 var tail = snake.SnakePositions.OrderByDescending(sp => sp.Order).First();
                 ChangeBodyPlace(snake);
                 ChangeHeadPlace(snake);
                 if (IsEatApple(snake))
                 {
                     AppendSnakeLength(snake, tail);
-                    _fieldService.GenerateNewApple(snake.Field);
+                    _fieldService.GenerateNewApple(_field);
                 }
                 if (IsSnakeDie(snakes.Select(s => s.Value).ToList(),
                     snake))
@@ -72,12 +74,12 @@ namespace Snake.Services
         {
             var headPosition = snake.SnakePositions.Single(sp => sp.Order == 0);
             return snakes.Any(s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
-            headPosition.Y < 0 || headPosition.X < 0 || headPosition.X > snake.Field.Width || headPosition.Y > snake.Field.Height;
+            headPosition.Y < 0 || headPosition.X < 0 || headPosition.X > _field.Width || headPosition.Y > _field.Height;
         }
             
         private bool IsEatApple(Models.Snake snake)
         {
-            var applePosition = snake.Field.Apple;
+            var applePosition = _field.Apple;
             return snake.SnakePositions.Any(sp => sp.Order == 0 &&
                 sp.X == applePosition.X &&
                 sp.Y == applePosition.Y);

@@ -8,9 +8,12 @@ namespace Snake.Services
 {
     public class SnakeService : ISnakeService
     {
-        public SnakeService() 
-        { }
-        public Models.Snake CreateSnake(string snakeName, Field field)
+        IMemoryCache _cache;
+        public SnakeService(IMemoryCache cache) 
+        {
+            _cache = cache;
+        }
+        public Models.Snake CreateSnakeAndAddToField(string snakeName, string userIp, Field field)
         {
             var headPosition = new SnakePosition
             {
@@ -40,20 +43,17 @@ namespace Snake.Services
                 bodyPositionSecond
             };
 
-
             var snake = new Models.Snake
             {
                 Id = Guid.NewGuid(),
                 Name = snakeName,
                 SnakePositions = snakePositions,
                 Orientation = headPosition.X >= field.Width / 2 ? SnakeOrientation.Left.GetHashCode() : SnakeOrientation.Right.GetHashCode(),
-                Field = field
+                UserIP = userIp,
+                FieldId = field.Id
             };
+            _cache.Set($"S_{snake.Id}", snake);
             return snake;
-        }
-        public void UpdateSnake()
-        {
-
         }
     }
 }
