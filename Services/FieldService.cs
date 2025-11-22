@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
+using Snake.Hubs;
 using Snake.Interfaces;
 using Snake.Models;
 using Snake.Models.DTO;
@@ -7,10 +9,12 @@ namespace Snake.Services
     public class FieldService : IFieldService
     {
         public IMemoryCache _cache;
+        IHubContext<SnakeHub> _hubContext;
         public ISnakeService _snakeService;
-        public FieldService(IMemoryCache cache)
+        public FieldService(IMemoryCache cache, IHubContext<SnakeHub> hubContext)
         {
             _cache = cache;
+            _hubContext = hubContext;
         }
         public void CreateNewField(FieldDTO field)
         {
@@ -24,7 +28,7 @@ namespace Snake.Services
             GenerateNewApple(newField);
             Console.WriteLine(newField.Id);
         }
-        public void GenerateNewApple(Field field)
+        public async Task GenerateNewApple(Field field)
         {
             var apple = new Apple
             {
@@ -34,6 +38,7 @@ namespace Snake.Services
             };
             field.Apple = apple;
             _cache.Set($"F_{field.Id}", field);
+            await _hubContext.Clients.Group(field.Id.ToString()).SendAsync("UpdateApplePosition", field.Apple);
         }
 
     }

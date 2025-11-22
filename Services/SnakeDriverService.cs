@@ -28,7 +28,7 @@ namespace Snake.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new Timer(ChangeSnakePlace, null, 0, 50);
+            _timer = new Timer(ChangeSnakePlace, null, 0, 400);
             return Task.CompletedTask;
         }
 
@@ -47,6 +47,7 @@ namespace Snake.Services
                 {
                     AppendSnakeLength(snake, tail);
                     _fieldService.GenerateNewApple(_field);
+                    await _hubContext.Clients.Group(snake.FieldId.ToString()).SendAsync("UpdateApplePosition", _field.Apple);
                 }
                 if (IsSnakeDie(snakes.Select(s => s).ToList(),
                     snake))
@@ -67,9 +68,9 @@ namespace Snake.Services
             var oldSnakeHeadPlace = snake.SnakePositions.Single(sp => sp.Order == 1);
             var newSnakeHeadPlace = snake.Orientation switch
             {
-                1 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X, Y = oldSnakeHeadPlace.Y + 1 },
+                1 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X, Y = oldSnakeHeadPlace.Y - 1 },
                 2 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X + 1, Y = oldSnakeHeadPlace.Y },
-                3 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X, Y = oldSnakeHeadPlace.Y - 1 },
+                3 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X, Y = oldSnakeHeadPlace.Y + 1 },
                 4 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X - 1, Y = oldSnakeHeadPlace.Y }
             };
             snake.SnakePositions.Add(newSnakeHeadPlace);

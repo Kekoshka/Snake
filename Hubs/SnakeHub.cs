@@ -31,8 +31,9 @@ namespace Snake.Hubs
             _snakeService.CreateSnakeAndAddToFieldAsync(snakeName, Context.ConnectionId, field);
             var snakePositions = _snakePositionSerice.GetAllSnakePositions(fieldId);
             await Clients.Group(fieldId.ToString()).SendAsync("AddSnakeToField", snakePositions);
+            await Clients.Caller.SendAsync("UpdateApplePosition", field.Apple);
         }
-        public async Task ChangeOrientation(int SnakeId, int orientation)
+        public async Task ChangeOrientation(Guid SnakeId, int orientation)
         {
             var snake = _cache.Get<Models.Snake>($"S_{SnakeId}");
             if (snake is null || snake.UserIP != Context.ConnectionId) return;
