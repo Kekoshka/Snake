@@ -1,8 +1,11 @@
 ﻿
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using Snake.Extensions;
+using Snake.Hubs;
 using Snake.Interfaces;
 using Snake.Models;
+using Snake.Models.DTO;
 
 namespace Snake.Services
 {
@@ -10,12 +13,17 @@ namespace Snake.Services
     {
         IFieldService _fieldService;
         IMemoryCache _cache;
+        IHubContext<SnakeHub> _hubContext;
         Timer _timer;
         Field _field;
-        public SnakeDriverService(IMemoryCache cache, IFieldService fieldService)
+        List<SnakePositionDTO> _snakePositions;
+        public SnakeDriverService(IMemoryCache cache,
+            IFieldService fieldService,
+            IHubContext<SnakeHub> hubContext)
         {
             _cache = cache;
             _fieldService = fieldService;
+            _hubContext = hubContext;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -26,11 +34,12 @@ namespace Snake.Services
 
         private void ChangeSnakePlace(object? state)
         {
-            var snakes = _cache.GetKeyValueItems<Models.Snake>(key => key.StartsWith("S_"));
-            snakes.ForEach(s =>
+            var snakes = _cache.GetItemsByPrefix<Models.Snake>("S_");
+            snakes.ForEach(async s =>
             {
-                var snake = s.Value;
+                var snake = s;
                 _field = _cache.Get<Field>($"F_{snake.FieldId}")!;
+                _snakePositions = new();
                 var tail = snake.SnakePositions.OrderByDescending(sp => sp.Order).First();
                 ChangeBodyPlace(snake);
                 ChangeHeadPlace(snake);
@@ -39,10 +48,15 @@ namespace Snake.Services
                     AppendSnakeLength(snake, tail);
                     _fieldService.GenerateNewApple(_field);
                 }
-                if (IsSnakeDie(snakes.Select(s => s.Value).ToList(),
+                if (IsSnakeDie(snakes.Select(s => s).ToList(),
                     snake))
+                {
                     _cache.Remove($"S_{snake.Id}");
+                    await _hubContext.Clients.Group(snake.FieldId.ToString()).SendAsync("DeleteSnakeFromField", snake.Id);
+                    return;
+                }
                 _cache.Set($"S_{snake.Id}", snake);
+                await _hubContext.Clients.Group(snake.FieldId.ToString()).SendAsync("UpdateSnakePositions", _snakePositions);
             }
             );
         }
@@ -59,11 +73,26 @@ namespace Snake.Services
                 4 => new SnakePosition { Order = 0, X = oldSnakeHeadPlace.X - 1, Y = oldSnakeHeadPlace.Y }
             };
             snake.SnakePositions.Add(newSnakeHeadPlace);
+            _snakePositions.Add(new SnakePositionDTO
+            {
+                SnakeId = snake.Id,
+                X = newSnakeHeadPlace.X,
+                Y = newSnakeHeadPlace.Y,
+                Action = Enums.Action.Append.GetHashCode()
+            });
         }
         private void ChangeBodyPlace(Models.Snake snake)
         {
-            snake.SnakePositions.Remove(snake.SnakePositions.OrderByDescending(sp => sp.Order).First());
+            var deletedPosition = snake.SnakePositions.OrderByDescending(sp => sp.Order).First();
+            snake.SnakePositions.Remove(deletedPosition);
             snake.SnakePositions.ToList().ForEach(sp => sp.Order += 1);
+            _snakePositions.Add(new SnakePositionDTO
+            {
+                SnakeId = snake.Id,
+                X = deletedPosition.X,
+                Y = deletedPosition.Y,
+                Action = Enums.Action.Remove.GetHashCode()
+            });
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -75,8 +104,9 @@ namespace Snake.Services
             var headPosition = snake.SnakePositions.Single(sp => sp.Order == 0);
             return snakes.Any(s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
             headPosition.Y < 0 || headPosition.X < 0 || headPosition.X > _field.Width || headPosition.Y > _field.Height;
+
         }
-            
+
         private bool IsEatApple(Models.Snake snake)
         {
             var applePosition = _field.Apple;
@@ -84,7 +114,7 @@ namespace Snake.Services
                 sp.X == applePosition.X &&
                 sp.Y == applePosition.Y);
         }
-        private void AppendSnakeLength(Models.Snake snake,SnakePosition tail)
+        private void AppendSnakeLength(Models.Snake snake, SnakePosition tail)
         {
             var newSnakePosition = new SnakePosition
             {

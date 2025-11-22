@@ -5,5 +5,6 @@
         public Guid SnakeId { get; set; }
         public int X { get; set; }
         public int Y { get; set; }
+        public int Action { get; set; }
     }
 }

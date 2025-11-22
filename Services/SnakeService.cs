@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
 using Snake.Enums;
+using Snake.Hubs;
 using Snake.Interfaces;
 using Snake.Models;
 using System.Xml.Linq;
@@ -8,12 +10,15 @@ namespace Snake.Services
 {
     public class SnakeService : ISnakeService
     {
+        IHubContext<SnakeHub> _hubContext;
         IMemoryCache _cache;
-        public SnakeService(IMemoryCache cache) 
+        public SnakeService(IMemoryCache cache,
+            IHubContext<SnakeHub> hubContext)
         {
             _cache = cache;
+            _hubContext = hubContext;
         }
-        public Models.Snake CreateSnakeAndAddToField(string snakeName, string userIp, Field field)
+        public async Task<Models.Snake> CreateSnakeAndAddToFieldAsync(string snakeName, string userIp, Field field)
         {
             var headPosition = new SnakePosition
             {
@@ -36,12 +41,12 @@ namespace Snake.Services
                 X = headPosition.X >= field.Width / 2 ? headPosition.X + 2 : headPosition.X - 2,
                 Y = headPosition.Y
             };
-            var snakePositions =  new List<SnakePosition>
-            {
-                headPosition,
-                bodyPositionFirst,
-                bodyPositionSecond
-            };
+            var snakePositions = new List<SnakePosition>
+        {
+            headPosition,
+            bodyPositionFirst,
+            bodyPositionSecond
+        };
 
             var snake = new Models.Snake
             {

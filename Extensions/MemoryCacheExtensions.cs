@@ -4,25 +4,14 @@ namespace Snake.Extensions
 {
     public static class MemoryCacheExtensions
     {
-        public static IEnumerable<KeyValuePair<object, object>> AsEnumerable(this IMemoryCache cache)
+        public static List<T> GetItemsByPrefix<T>(this IMemoryCache memoryCache, string pattern)
         {
-            return (cache as MemoryCache)?.AsEnumerable() ?? Enumerable.Empty<KeyValuePair<object, object>>();
-        }
-
-        public static List<T> GetItemsByPattern<T>(this IMemoryCache cache, string pattern)
-        {
-            return cache.AsEnumerable()
-                .Where(item => item.Key.ToString().Contains(pattern) && item.Value is T)
-                .Select(item => (T)item.Value)
-                .ToList();
-        }
-
-        public static List<KeyValuePair<string, T>> GetKeyValueItems<T>(this IMemoryCache cache, Func<string, bool> keyPredicate)
-        {
-            return cache.AsEnumerable()
-                .Where(item => keyPredicate(item.Key.ToString()) && item.Value is T)
-                .Select(item => new KeyValuePair<string, T>(item.Key.ToString(), (T)item.Value))
-                .ToList();
+            List<T> snakes = new();
+            var cache = memoryCache as MemoryCache;
+            var keys = cache.Keys.Where(k => k.ToString().StartsWith(pattern)).Select(k => k.ToString());
+            foreach(var key in keys)
+                snakes.Add(cache.Get<T>(key));
+            return snakes;
         }
     }
 }

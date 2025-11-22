@@ -13,9 +13,9 @@ namespace Snake.Hubs
         ISnakeService _snakeService;
         ISnakePositionSerice _snakePositionSerice;
         public SnakeHub(IMemoryCache cache,
-            IFieldService fieldService, 
+            IFieldService fieldService,
             ISnakeService snakeService,
-            ISnakePositionSerice snakePositionSerice) 
+            ISnakePositionSerice snakePositionSerice)
         {
             _cache = cache;
             _fieldService = fieldService;
@@ -28,9 +28,9 @@ namespace Snake.Hubs
             var field = _cache.Get<Field>($"F_{fieldId}");
             if (field is null)
                 return;
-            _snakeService.CreateSnakeAndAddToField(snakeName, Context.ConnectionId, field);
+            _snakeService.CreateSnakeAndAddToFieldAsync(snakeName, Context.ConnectionId, field);
             var snakePositions = _snakePositionSerice.GetAllSnakePositions(fieldId);
-            await Clients.Caller.SendAsync("LoadSnakesPoitions", snakePositions);
+            await Clients.Group(fieldId.ToString()).SendAsync("AddSnakeToField", snakePositions);
         }
         public async Task ChangeOrientation(int SnakeId, int orientation)
         {
@@ -42,10 +42,6 @@ namespace Snake.Hubs
         public async Task CreateGame(FieldDTO newField)
         {
             _fieldService.CreateNewField(newField);
-        }
-        public async Task SendNewSnakesPositions(Guid fieldId, List<SnakePositionDTO> snakePositions)
-        {
-            await Clients.Group(fieldId.ToString()).SendAsync("UpdateSnakePositions", snakePositions);
         }
 
     }
