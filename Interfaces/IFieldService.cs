@@ -5,7 +5,7 @@ namespace Snake.Interfaces
 {
     public interface IFieldService
     {
-        void CreateNewField(FieldDTO field);
+        Guid CreateNewField(FieldDTO field);
         Task GenerateNewApple(Field field);
     }
 }

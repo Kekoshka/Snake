@@ -16,7 +16,7 @@ namespace Snake.Services
             _cache = cache;
             _hubContext = hubContext;
         }
-        public void CreateNewField(FieldDTO field)
+        public Guid CreateNewField(FieldDTO field)
         {
             var newField = new Field
             {
@@ -26,7 +26,11 @@ namespace Snake.Services
                 Name = field.Name,
             };
             GenerateNewApple(newField);
-            Console.WriteLine(newField.Id);
+            _cache.Set($"F_{newField.Id}", newField);
+
+            Console.WriteLine($"Created field: {newField.Id}, Size: {newField.Width}x{newField.Height}");
+
+            return newField.Id;
         }
         public async Task GenerateNewApple(Field field)
         {

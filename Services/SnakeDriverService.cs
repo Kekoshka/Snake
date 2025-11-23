@@ -28,7 +28,7 @@ namespace Snake.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new Timer(ChangeSnakePlace, null, 0, 400);
+            _timer = new Timer(ChangeSnakePlace, null, 0, 150);
             return Task.CompletedTask;
         }
 
@@ -103,8 +103,10 @@ namespace Snake.Services
         private bool IsSnakeDie(List<Models.Snake> snakes, Models.Snake snake)
         {
             var headPosition = snake.SnakePositions.Single(sp => sp.Order == 0);
-            return snakes.Any(s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
+            return snakes.Any (s => s.Id != snake.Id && s.SnakePositions.Any(sp => sp.Y == headPosition.Y && sp.X == headPosition.X)) ||
+            snake.SnakePositions.Any(sp => sp.Order != 0 && sp.X == headPosition.X && sp.Y == headPosition.Y) ||
             headPosition.Y < 0 || headPosition.X < 0 || headPosition.X > _field.Width || headPosition.Y > _field.Height;
+
 
         }
 
