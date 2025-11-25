@@ -5,57 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Многопользовательская Змейка</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Экран выбора игры -->
-        <div id="gameSelection" class="screen active">
-            <h1>Многопользовательская Змейка</h1>
-            
-            <div class="form-group">
-                <h3>Создать новую игру</h3>
-                <input type="text" id="newGameName" placeholder="Название игры" maxlength="20">
-                <input type="number" id="gameWidth" placeholder="Ширина поля" value="40" min="20" max="100">
-                <input type="number" id="gameHeight" placeholder="Высота поля" value="30" min="20" max="100">
-                <button onclick="createGame()">Создать игру</button>
-            </div>
+    <div id="mainScreen" class="screen active">
+        <h1>Многопользовательская Змейка</h1>
 
-            <div class="form-group">
-                <h3>Присоединиться к игре</h3>
-                <input type="text" id="joinGameId" placeholder="ID игры">
-                <input type="text" id="playerName" placeholder="Ваше имя" maxlength="15">
-                <button onclick="joinGame()">Присоединиться</button>
-            </div>
-
-            <div id="errorMessage" class="error"></div>
+        <div class="form-container">
+            <h2>Создать игру</h2>
+            <form id="createGameForm">
+                <input type="text" id="gameName" placeholder="Название игры" required>
+                <input type="number" id="fieldWidth" placeholder="Ширина поля" min="10" max="50" required>
+                <input type="number" id="fieldHeight" placeholder="Высота поля" min="10" max="50" required>
+                <button type="submit">Создать игру</button>
+            </form>
         </div>
 
-        <!-- Игровое поле -->
-        <div id="gameScreen" class="screen">
-            <div class="game-header">
-                <div class="game-info">
-                    <span id="gameTitle">Игра: </span>
-                    <span id="playerCount">Игроков: 0</span>
-                    <span id="playerScore">Счёт: 0</span>
-                </div>
-                <button onclick="leaveGame()">Выйти</button>
-            </div>
-            
-            <div class="game-container">
-                <canvas id="gameCanvas"></canvas>
-                <div id="gameOver" class="game-over hidden">
-                    <h2>Игра окончена!</h2>
-                    <button onclick="respawn()">Играть снова</button>
-                </div>
-            </div>
-
-            <div class="controls-info">
-                <p>Управление: Стрелки ← ↑ → ↓</p>
-            </div>
+        <div class="form-container">
+            <h2>Подключиться к игре</h2>
+            <form id="joinGameForm">
+                <input type="text" id="playerName" placeholder="Ваш ник" required>
+                <input type="text" id="fieldId" placeholder="ID игры" required>
+                <button type="submit">Подключиться</button>
+            </form>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <div id="gameScreen" class="screen">
+        <div class="game-header">
+            <div id="gameInfo"></div>
+            <div id="playerInfo"></div>
+            <div id="connectionInfo">Статус: Не подключено</div>
+        </div>
+        <canvas id="gameCanvas" tabindex="0"></canvas>
+        <div class="controls">
+            <p>Управление: стрелки ← ↑ → ↓ (предварительно кликните на поле)</p>
+            <button id="leaveGame">Покинуть игру</button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
